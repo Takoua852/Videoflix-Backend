@@ -1,0 +1,60 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+ENV/
+env.bak/
+
+# Django
+*.sqlite3
+local_settings.py
+*.log
+media/
+staticfiles/
+*.pot
+*.mo
+
+# Docker-related
+*.env
+docker-compose.override.yml
+**/Dockerfile.*
+web/media
+web/static/CACHE
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+npm-debug.log
+yarn-error.log
+
+# Test / Coverage
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# RQ / Celery
+*.pid
+django_rq_worker.log
