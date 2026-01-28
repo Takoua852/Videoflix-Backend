@@ -1,64 +1,53 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Confirm your email</title>
   </head>
-  <body style="margin:0;padding:0;background:#ffffff;">
+  <body style="margin:0;padding:0;background:#ffffff;font-size:16px;width:100%;">
     <table width="100%" cellpadding="0" cellspacing="0">
       <tr>
         <td align="left" style="padding:40px 0;">
-          <table width="600" cellpadding="0" cellspacing="0"
-                 style="font-family:Arial, Helvetica, sans-serif;color:#000;">
-            
+          <table cellpadding="0" cellspacing="0" style="font-family:Arial, Helvetica, sans-serif;color:#000;">
             <tr>
-              <td align="center" style="padding-bottom:24px;">
-                <img src="{{ logo_url }}" alt="Videoflix" height="48" style="display:block;">
-              </td>
-            </tr>
-
-            <tr>
-              <td style="padding-bottom:16px;">
-                Dear {{ username }},
-              </td>
+              <td style="padding-bottom:16px;">Dear {{ username }},</td>
             </tr>
 
             <tr>
               <td style="padding-bottom:24px;">
                 Thank you for registering with
-                <strong style="color:#4a3aff;">Videoflix</strong>.
-                Please confirm your email address by clicking the button below.
+                <strong style="color:#4a3aff;">Videoflix</strong>. Please confirm your email address by clicking the button below:
               </td>
             </tr>
-
             <tr>
               <td align="left" style="padding-bottom:24px;">
-                <a href="{{ activation_link }}"
-                   style="background:#1a2cff;
+                <a href="{{ activation_link }}" style="background:#1a2cff;
                           color:#ffffff;
                           padding:12px 26px;
                           border-radius:24px;
                           text-decoration:none;
                           font-weight:600;
-                          display:inline-block;">
-                  Activate account
-                </a>
+                          display:inline-block;">Activate account</a>
               </td>
             </tr>
-
             <tr>
-              <td style="padding-bottom:24px;">
-                If you did not create an account, you can safely ignore this email.
-              </td>
+              <td style="padding-bottom:24px;">If you did not create an account, you can safely ignore this email.</td>
             </tr>
-
             <tr>
               <td>
-                Best regards,<br>
+                Best regards,
+              </td>
+            </tr>
+            <tr>
+              <td>
                 Your Videoflix Team
               </td>
             </tr>
-
+            <tr>
+              <td align="left">
+                <img src="{{ logo_url }}" alt="Videoflix" height="48" style="width: 250px;height: 40px;padding-top: 40px;" />
+              </td>
+            </tr>
           </table>
         </td>
       </tr>

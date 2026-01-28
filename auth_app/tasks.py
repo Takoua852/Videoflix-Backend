@@ -1,17 +1,15 @@
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+import os
 
-
-LOGO_URL = "https://takoua-jelassi.developerakademie.net/logo_icon.png"
+LOGO_URL = os.getenv("LOGO_URL", "https://takoua-jelassi.developerakademie.net/logo_icon.png")
 
 
 def send_activation_email_task(email: str, activation_link: str):
-
     """
     Task for sending account activation email.
     """
-
     subject = "Confirm your email"
     context = {
         "username": email,
@@ -27,7 +25,6 @@ def send_activation_email_task(email: str, activation_link: str):
 
 
 def send_password_reset_email_task(email: str, reset_link: str):
-
     """
     Task for sending password reset email
     """

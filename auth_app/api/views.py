@@ -127,12 +127,11 @@ class LoginView(APIView):
             "user": {"id": user.id, "email": user.email}
         }, status=status.HTTP_200_OK)
 
-        # JWT Cookies setzen
         response.set_cookie(
             key="access_token",
             value=str(access),
             httponly=True,
-            secure=False,  # lokal testen
+            secure=False,  # lokal False, in prod True
             samesite="Lax",
         )
         response.set_cookie(

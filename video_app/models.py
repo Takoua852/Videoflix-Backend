@@ -15,20 +15,20 @@ class VideoCategory(models.TextChoices):
 
 class Video(models.Model):
     """Model representing a video uploaded by a user."""
-    
+
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
     source = models.FileField(
         upload_to="videos/source/",
-        null=True,
-        blank=True
+        blank=False,   # required
+        null=False
     )
 
     thumbnail = models.ImageField(
         upload_to="thumbnails/",
-        blank=True,
-        null=True
+        blank=False,   # required
+        null=False
     )
     category = models.CharField(
         max_length=50,
