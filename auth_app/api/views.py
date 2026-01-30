@@ -12,7 +12,7 @@ from rest_framework.permissions import AllowAny
 from django.conf import settings
 from django.db import transaction
 from django_rq import get_queue
-from auth_app.tasks import send_activation_email_task, send_password_reset_email_task
+from auth_app.tasks import send_activation_email, send_password_reset_email
 
 User = get_user_model()
 
@@ -48,7 +48,7 @@ class RegisterView(generics.CreateAPIView):
 
         def enqueue_email():
             queue = get_queue("default", autocommit=True)
-            queue.enqueue(send_activation_email_task, user.email, activation_link)
+            queue.enqueue(send_activation_email, user.email, activation_link)
 
         transaction.on_commit(enqueue_email)
 
@@ -232,7 +232,7 @@ class PasswordResetView(APIView):
 
         def enqueue_email():
             queue = get_queue("default", autocommit=True)
-            queue.enqueue(send_password_reset_email_task, user.email, reset_link)
+            queue.enqueue(send_password_reset_email, user.email, reset_link)
 
         transaction.on_commit(enqueue_email)
 
