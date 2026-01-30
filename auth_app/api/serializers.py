@@ -2,7 +2,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -44,30 +43,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             is_active=False  # User is inactive until email activation
         )
         return user
-    
-# ------------------- Login -------------------
 
-class LoginSerializer(TokenObtainPairSerializer):
-    """
-    Authenticates a user and returns JWT access and refresh tokens.
-    """
-
-    username_field = "email"
-
-    def validate(self, attrs):
-        data = super().validate(attrs)
-
-        if not self.user.is_active:
-            raise serializers.ValidationError("Account not activated.")
-
-        data["user"] = {
-            "id": self.user.id,
-            "email": self.user.email,
-        }
-        return data
-
-# ------------------- Password Reset Request -------------------
-
+# ------------------- Password Reset -------------------        
 
 class PasswordResetSerializer(serializers.Serializer):
     """Validates email for password reset request."""

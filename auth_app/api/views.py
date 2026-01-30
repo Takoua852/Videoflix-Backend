@@ -1,11 +1,11 @@
 from rest_framework import generics, status
-from .serializers import RegisterSerializer, LoginSerializer,PasswordResetSerializer, PasswordResetConfirmSerializer
+from .serializers import RegisterSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model, authenticate
 from django.utils.encoding import force_str, force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError, OutstandingToken, BlacklistedToken
 from auth_app.tokens import account_activation_token, password_reset_token
 from .permissions import HasRefreshTokenCookie
 from rest_framework.permissions import AllowAny
@@ -13,7 +13,6 @@ from django.conf import settings
 from django.db import transaction
 from django_rq import get_queue
 from auth_app.tasks import send_activation_email, send_password_reset_email
-
 User = get_user_model()
 
 # ------------------- Registration & Activation -------------------
@@ -102,40 +101,51 @@ class LoginView(APIView):
     authentication_classes = []
 
     def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        email = request.data.get("email")
+        password = request.data.get("password")
 
-        access = serializer.validated_data["access"]
-        refresh = serializer.validated_data["refresh"]
+        if not email or not password:
+            return Response({"detail": "Email and password are required."},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        user = serializer.validated_data["user"]
+        user = authenticate(request, username=email, password=password)
 
-        response = Response(
-            {
-                "detail": "Login successful",
-                "user": user,
-            },
-            status=status.HTTP_200_OK,
-        )
+        if user is None:
+            return Response({"detail": "Invalid credentials."},
+                            status=status.HTTP_401_UNAUTHORIZED)
+
+        if not user.is_active:
+            return Response({"detail": "Account not activated."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        refresh = RefreshToken.for_user(user)
+        access = refresh.access_token
+
+        response = Response({
+            "detail": "Login successful",
+            "user": {"id": user.id, "email": user.email}
+        }, status=status.HTTP_200_OK)
 
         response.set_cookie(
             key="access_token",
-            value=access,
+            value=str(access),
             httponly=True,
-            secure=False,   # prod: True
+            secure=False,  # lokal False, in prod True
             samesite="Lax",
         )
         response.set_cookie(
             key="refresh_token",
-            value=refresh,
+            value=str(refresh),
             httponly=True,
-            secure=False,   # prod: True
+            secure=False,
             samesite="Lax",
         )
 
         return response
 
+
 # ------------------- Logout -------------------
+
 
 class LogoutView(APIView):
     """POST /api/logout/ - Logs out user, deletes cookies, blacklists refresh token."""
@@ -189,7 +199,6 @@ class TokenRefreshView(APIView):
             {"detail": "Token refreshed", "access": access_token},
             status=status.HTTP_200_OK
         )
-
         response.set_cookie(
             key="access_token",
             value=access_token,
@@ -201,6 +210,7 @@ class TokenRefreshView(APIView):
         return response
 
 # ------------------- Password Reset -------------------
+
 
 class PasswordResetView(APIView):
     """POST /api/password_reset/ - Sends password reset link to user's email."""
@@ -251,4 +261,11 @@ class PasswordResetConfirmView(APIView):
         user.set_password(new_password)
         user.save()
 
-        return Response({"detail": "Password successfully reset."}, status=200)
+        for t in OutstandingToken.objects.filter(user=user):
+            BlacklistedToken.objects.get_or_create(token=t)
+
+        response = Response(
+            {"detail": "Password successfully reset."}, status=200)
+        response.delete_cookie("access_token")
+        response.delete_cookie("refresh_token")
+        return response
