@@ -1,5 +1,5 @@
 from rest_framework import generics, status
-from .serializers import RegisterSerializer, PasswordResetSerializer, PasswordResetConfirmSerializer
+from .serializers import RegisterSerializer, LoginSerializer,PasswordResetSerializer, PasswordResetConfirmSerializer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model, authenticate
@@ -102,50 +102,40 @@ class LoginView(APIView):
     authentication_classes = []
 
     def post(self, request):
-        email = request.data.get("email")
-        password = request.data.get("password")
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        if not email or not password:
-            return Response({"detail": "Email and password are required."},
-                            status=status.HTTP_400_BAD_REQUEST)
+        access = serializer.validated_data["access"]
+        refresh = serializer.validated_data["refresh"]
 
-        user = authenticate(request, username=email, password=password)
+        user = serializer.validated_data["user"]
 
-        if user is None:
-            return Response({"detail": "Invalid credentials."},
-                            status=status.HTTP_401_UNAUTHORIZED)
-
-        if not user.is_active:
-            return Response({"detail": "Account not activated."},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        refresh = RefreshToken.for_user(user)
-        access = refresh.access_token
-
-        response = Response({
-            "detail": "Login successful",
-            "user": {"id": user.id, "email": user.email}
-        }, status=status.HTTP_200_OK)
+        response = Response(
+            {
+                "detail": "Login successful",
+                "user": user,
+            },
+            status=status.HTTP_200_OK,
+        )
 
         response.set_cookie(
             key="access_token",
-            value=str(access),
+            value=access,
             httponly=True,
-            secure=False,  # lokal False, in prod True
+            secure=False,   # prod: True
             samesite="Lax",
         )
         response.set_cookie(
             key="refresh_token",
-            value=str(refresh),
+            value=refresh,
             httponly=True,
-            secure=False,
+            secure=False,   # prod: True
             samesite="Lax",
         )
 
         return response
 
 # ------------------- Logout -------------------
-
 
 class LogoutView(APIView):
     """POST /api/logout/ - Logs out user, deletes cookies, blacklists refresh token."""
@@ -195,11 +185,11 @@ class TokenRefreshView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # neuen access_token als HttpOnly Cookie setzen
         response = Response(
             {"detail": "Token refreshed", "access": access_token},
             status=status.HTTP_200_OK
         )
+
         response.set_cookie(
             key="access_token",
             value=access_token,
@@ -211,7 +201,6 @@ class TokenRefreshView(APIView):
         return response
 
 # ------------------- Password Reset -------------------
-
 
 class PasswordResetView(APIView):
     """POST /api/password_reset/ - Sends password reset link to user's email."""
